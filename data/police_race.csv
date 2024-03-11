@@ -1,0 +1,49 @@
+_id,Type_of_Incident,Gender_of_People_Involved,Perceived_Race_of_People_Involv,Incident_Count,ObjectId
+1,Reported Use of Force Incidents,Women,Black ,11,1
+2,Reported Use of Force Incidents,Women,East/Southeast Asian ,2,2
+3,Reported Use of Force Incidents,Women,Indigenous ,NA,3
+4,Reported Use of Force Incidents,Women,Latino ,2,4
+5,Reported Use of Force Incidents,Women,Middle Eastern ,1,5
+6,Reported Use of Force Incidents,Women,South Asian ,2,6
+7,Reported Use of Force Incidents,Women,White ,24,7
+8,Reported Use of Force Incidents,Women,Multiple race group,3,8
+9,Enforcement Action Incidents,Women,Black ,3857,9
+10,Enforcement Action Incidents,Women,East/Southeast Asian ,1392,10
+11,Enforcement Action Incidents,Women,Indigenous ,595,11
+12,Enforcement Action Incidents,Women,Latino ,390,12
+13,Enforcement Action Incidents,Women,Middle Eastern ,655,13
+14,Enforcement Action Incidents,Women,South Asian ,943,14
+15,Enforcement Action Incidents,Women,White ,8812,15
+16,Enforcement Action Incidents,Women,Multiple race group,2610,16
+17,Reported Use of Force Incidents,Men,Black ,247,17
+18,Reported Use of Force Incidents,Men,East/Southeast Asian ,38,18
+19,Reported Use of Force Incidents,Men,Indigenous ,23,19
+20,Reported Use of Force Incidents,Men,Latino ,12,20
+21,Reported Use of Force Incidents,Men,Middle Eastern ,26,21
+22,Reported Use of Force Incidents,Men,South Asian ,42,22
+23,Reported Use of Force Incidents,Men,White ,250,23
+24,Reported Use of Force Incidents,Men,Multiple race group,95,24
+25,Enforcement Action Incidents,Men,Black ,14136,25
+26,Enforcement Action Incidents,Men,East/Southeast Asian ,3977,26
+27,Enforcement Action Incidents,Men,Indigenous ,1306,27
+28,Enforcement Action Incidents,Men,Latino ,1423,28
+29,Enforcement Action Incidents,Men,Middle Eastern ,3156,29
+30,Enforcement Action Incidents,Men,South Asian ,3381,30
+31,Enforcement Action Incidents,Men,White ,24082,31
+32,Enforcement Action Incidents,Men,Multiple race group,8603,32
+33,Reported Use of Force Incidents,Mixed Gender Group,Black ,29,33
+34,Reported Use of Force Incidents,Mixed Gender Group,East/Southeast Asian ,3,34
+35,Reported Use of Force Incidents,Mixed Gender Group,Indigenous ,NA,35
+36,Reported Use of Force Incidents,Mixed Gender Group,Latino ,NA,36
+37,Reported Use of Force Incidents,Mixed Gender Group,Middle Eastern ,1,37
+38,Reported Use of Force Incidents,Mixed Gender Group,South Asian ,2,38
+39,Reported Use of Force Incidents,Mixed Gender Group,White ,20,39
+40,Reported Use of Force Incidents,Mixed Gender Group,Multiple race group,56,40
+41,Enforcement Action Incidents,Mixed Gender Group,Black ,1314,41
+42,Enforcement Action Incidents,Mixed Gender Group,East/Southeast Asian ,436,42
+43,Enforcement Action Incidents,Mixed Gender Group,Indigenous ,71,43
+44,Enforcement Action Incidents,Mixed Gender Group,Latino ,160,44
+45,Enforcement Action Incidents,Mixed Gender Group,Middle Eastern ,241,45
+46,Enforcement Action Incidents,Mixed Gender Group,South Asian ,330,46
+47,Enforcement Action Incidents,Mixed Gender Group,White ,2030,47
+48,Enforcement Action Incidents,Mixed Gender Group,Multiple race group,2620,48

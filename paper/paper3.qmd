@@ -1,0 +1,286 @@
+---
+title: ""
+subtitle: ""
+author: Heng Ma 
+thanks: "Code and data are available at: . "
+date: "`r format(Sys.time(), '%d %B %Y')`"
+abstract: " "
+format: pdf
+toc: TRUE
+bibliography: references.bib
+---
+## introduction
+As the influence of political correctness increasingly permeates society, incidents of violence stemming from racial issues are prevalent, drawing widespread attention from both the public and academic communities to the dynamics of police use of force. This has underscored the urgent need for systematic analysis to inform policies and training within law enforcement agencies. Against a backdrop of growing calls for justice and accountability, understanding the role of police demographic data (such as gender and race) in the incidence of force use has emerged as a critical area of investigation. This paper delves into the complex interplay between these demographic factors and the frequency of reported force use incidents, aiming to elucidate patterns that may underlie such encounters. Despite extensive research into police behaviors and practices, a significant gap remains in empirical studies that precisely quantify the impact of police gender and race on the occurrence of use-of-force events. To bridge this gap, our study utilizes a novel dataset detailing the gender and race of officers involved in use-of-force incidents, along with event counts, to construct a linear model that thoroughly explores these relationships. The essence of this article lies in analyzing and understanding the dynamics of police-involved violent incidents in relation to the demographic characteristics of the involved officers, focusing on the relationship between gender and race and the use of violence during law enforcement. The purpose of this model is to reveal potential biases in how violent incidents occur with changes in these demographic factors. The significance of this research is multifaceted. Our findings not only facilitate rapid discussions about police practices and factors influencing use-of-force incidents but also provide empirical evidence that can guide targeted interventions and training programs aimed at reducing bias incidence and improving police services.Ultimately The model ultimately predicts that specific genders and races 
+have no influence to use violence during law enforcement actions.
+
+
+```{r}
+## we use R [@citeR] for all data wrangling and analysis and R packages tidyverse [@tidy], ggthemes [@ggthemes], ggprism [@ggprism] and patchwork [@patchwork] to produce the figures, kableExtra [@kableExtra] to produce the tables.
+```
+
+
+```{r setup, include=FALSE}
+
+# Load libraries
+
+if(!require(ggplot2)){install.packages('ggplot2', dependencies = TRUE)}
+if(!require(dplyr)){install.packages('dplyr', dependencies = TRUE)}
+if(!require(readr)){install.packages('readr', dependencies = TRUE)}
+if(!require(knitr)){install.packages('knitr', dependencies = TRUE)}
+if(!require(jtools)){install.packages('jtools', dependencies = TRUE)}
+if(!require(tidyverse)){install.packages('tidyverse', dependencies = TRUE)}
+if(!require(knitr)){install.packages('knitr', dependencies = TRUE)}
+if(!require(beepr)){install.packages('beepr', dependencies = TRUE)}
+if(!require(modelsummary)){install.packages('modelsummary', dependencies = TRUE)}
+if(!require(opendatatoronto)){install.packages('opendatatoronto', dependencies = TRUE)}
+
+library(opendatatoronto)
+library(ggplot2)
+library(readr)
+library(beepr)
+library(broom)
+library(broom.mixed)
+library(knitr)
+library(modelsummary)
+library(purrr)
+library(rstanarm)
+library(testthat)
+library(tidyverse)
+```
+# data
+
+## download data
+The source data for this article comes from Open Data Toronto，which is a transparency and engagement initiative by the City of Toronto, offering public access to datasets from various city departments and agencies. It covers areas such as transportation, environment, community services, urban planning, and city operations. The data are collected through administrative records, surveys, sensors, and public contributions, available in formats like CSV, JSON, and shapefiles to support diverse uses, including research and app development. Through the Open Data Toronto portal, users can find, access, and utilize data freely, fostering innovation, informed decision-making, and community development. This initiative underscores the city's commitment to openness, accountability, and collaboration between the government and the public.
+```{r}
+#| echo: false
+#| warning: false
+packagedata <- search_packages("race")
+toronto_gender <-
+  list_package_resources("police-race-and-identity-based-data-use-of-force") |>
+  filter(name == 
+           "Gender Composition") |>
+  get_resource()
+write_csv(
+  x = toronto_gender,
+  file = "police_race.csv"
+)
+head(toronto_gender)
+```
+## stimulate
+The steps for simulating data include: 1. Loading the original data using the readr package. 2. Extracting categories for both gender and perceived race of individuals involved, using the levels(factor(...)) construct. 3. Determining the size of the dataset, counting the number of rows (n) in the original dataset. 4. Setting a seed for reproducibility to ensure that the simulation can be repeated with the same results. 5. Simulating data
+```{r}
+#| echo: false
+#| warning: false
+original_data <- read.csv('/cloud/project/police_race.csv')
+
+gender_levels <- levels(factor(original_data$Gender_of_People_Involved))
+race_levels <- levels(factor(original_data$Perceived_Race_of_People_Involv))
+
+n <- nrow(original_data)
+
+set.seed(2) 
+simulated_data <- data.frame(
+  Gender_of_People_Involved = sample(gender_levels, n, replace = TRUE),
+  Perceived_Race_of_People_Involv = sample(race_levels, n, replace = TRUE),
+  Incident_Count = sample(0:max(original_data$Incident_Count, na.rm = TRUE), n, replace = TRUE)
+)
+head(simulated_data)
+```
+## data clean
+The article primarily employs listwise Deletion for data cleaning by deleting missing values. Although the original dataset contains a large number of rows, many of these rows are duplicates. The data cleaning process also involves removing meaningless variables, including _id, Objectid, and Type_of_Incident. These variables do not affect the linear model, so they are cleaned out. The code aggregates counts by adding them together based on the same Perceived_Race_of_People_Involved to create a new list. The main objective is to categorize the data, making it easier for the linear model to interpret.
+```{r}
+#| echo: false
+#| warning: false
+
+cleaning_data <- read_csv("/cloud/project/police_race.csv") %>%
+  drop_na(Incident_Count) %>%
+  mutate(Gender_of_People_Involved = as.factor(Gender_of_People_Involved),
+         Perceived_Race_of_People_Involv = as.factor(Perceived_Race_of_People_Involv))
+
+# Corrected: Use cleaning_data for sorting
+data_sorted <- cleaning_data %>% arrange(desc(Incident_Count))
+top_10 <- head(data_sorted, 10)
+
+data_selected <- select(top_10, Perceived_Race_of_People_Involv, Incident_Count)
+data_selected$Incident_Count[is.na(data_selected$Incident_Count)] <- 0
+data_reduced <- head(data_selected, 10)
+
+# Corrected: Use cleaning_data for grouping and summarization
+data_grouped <- cleaning_data %>%
+  group_by(Perceived_Race_of_People_Involv) %>%
+  summarise(Incident_Count = sum(Incident_Count, na.rm = TRUE))
+
+print(data_grouped)
+
+
+```
+## variables interest
+This dataset is divided into four different categories: Type of Incident, Gender of People Involved, Perceived Race of People Involved, and Incident Count. The Type of Incident is used to determine whether the violence was recorded by someone else or used in an enforcement action. Since our focus is on the race and gender of the police and whether the use of force is reactive or proactive does not affect the data analysis, this will be cleaned out later. Gender_of_People_Involved represents the gender of the police officer involved,As the dependent variable being used, it will be incorporated into a linear model for analysis. Incident_Count represents the number of times police use force during law enforcement, and this data will be used as an independent variable. Perceived_Race_of_People_Involved represents the race of the law enforcement officers. _id and ObjectId represent the column numbers from top to bottom in the list and will be removed during the cleaning process.
+
+
+# models
+## model introduction
+The script provided demonstrates a structured approach to processing and analyzing data related to incidents involving police interactions, with a focus on the gender and perceived race of the individuals involved. The process begins by reading a CSV file containing the relevant data, which is then cleaned by removing any missing values in the Incident_Count column. The gender and perceived race variables are transformed into factor variables, signifying their categorical nature.
+
+To facilitate analysis, categorical variables are converted into dummy variables. This conversion is crucial for linear modeling, as it allows the inclusion of categorical predictors by representing them as one or more binary variables. The dummy variables, along with the incident count, are then combined into a new dataset ready for analysis.
+```{r}
+#| echo: false
+#| warning: false
+
+data <- read_csv("/cloud/project/police_race.csv") %>%
+  drop_na(Incident_Count) %>%
+  mutate(Gender_of_People_Involved = as.factor(Gender_of_People_Involved),
+         Perceived_Race_of_People_Involv = as.factor(Perceived_Race_of_People_Involv))
+
+# Convert categorical variables into dummy variables and bind them with Incident_Count
+dummy_vars <- model.matrix(~ Gender_of_People_Involved + Perceived_Race_of_People_Involv + 0, data = data)
+data_prepared <- bind_cols(data %>% select(Incident_Count), as_tibble(dummy_vars))
+
+# Split the prepared data into training and testing sets
+set.seed(123) # For reproducibility
+training_indices <- sample(1:nrow(data_prepared), 0.8 * nrow(data_prepared), replace = FALSE)
+
+train_data <- data_prepared[training_indices, ]
+test_data <- data_prepared[-training_indices, ]
+
+# Now, fit the linear model using the corrected train_data
+model <- lm(Incident_Count ~ ., data = train_data)
+
+# Predict on the testing set
+predictions <- predict(model, test_data)
+
+# Evaluate model performance
+evaluation_metrics <- tibble(
+  mse = mean((test_data$Incident_Count - predictions)^2),
+  rmse = sqrt(mean((test_data$Incident_Count - predictions)^2))
+)
+
+# Display evaluation metrics using kable
+kable(
+  evaluation_metrics,
+  col.names = c("Mean Squared Error", "Root Mean Squared Error"),
+  digits = 2,
+  align = c("l", "r"),
+  booktabs = TRUE,
+  linesep = ""
+)
+
+test_data$Predicted_Incident_Count <- predictions
+
+
+```
+
+## analize the model
+For model training and validation, the dataset is split into training and testing sets. A random subset, constituting 80% of the data, is selected for training, ensuring model robustness and generalizability. The linear model is then fitted on the training data, using incident count as the response variable and the dummy variables as predictors. This model aims to understand the relationship between the gender and perceived race of individuals involved in police incidents and the count of such incidents.
+
+Predictions are made on the testing set to evaluate the model's performance. The evaluation metrics used are the Mean Squared Error (MSE) and the Root Mean Squared Error (RMSE), both of which provide insight into the model's accuracy by quantifying the difference between the observed and predicted incident counts. These metrics are essential for assessing the model's predictive performance, with lower values indicating better fit.
+
+Finally, the script aims to present the evaluation metrics in a well-formatted table, making it easier to interpret the model's performance. Additionally, the predicted incident counts are appended to the testing dataset, providing a comprehensive overview of the model's predictions compared to the actual data. This thorough approach not only aids in understanding the factors influencing police incidents but also lays the groundwork for further research and policy-making aimed at addressing disparities and improving police-community interactions.
+
+```{r}
+#| echo: false
+#| warning: false
+test_data_with_predictions <- test_data %>%
+  mutate(Predicted_Incident_Count = predictions)
+
+# Create the base plot
+base_plot <- ggplot(test_data_with_predictions, aes(x = Incident_Count, y = Predicted_Incident_Count)) +
+  geom_point(alpha = 0.5, color = "blue") +
+  labs(
+    x = "Actual Incident Count",
+    y = "Predicted Incident Count"
+  ) +
+  theme_classic()
+
+# Add a geom_smooth to draw the regression line
+plot_with_line <- base_plot +
+  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = "dashed") +
+  geom_abline(intercept = 0, slope = 1, linetype = "dotted", color = "red") # Ideal fit line
+
+# Display the plot
+plot_with_line
+```
+## graph analize 
+This graph illustrates the relationship between the actual and predicted incident counts as derived from the linear model. The x-axis denotes the actual incident counts, and the y-axis represents the predicted counts based on the model. The dashed line represents the ideal situation where the predictions perfectly match the actual values, which would mean the points would lie exactly on this line if the model had perfect prediction capability.
+
+From the graph, we can observe that the points do not align perfectly with the dashed line, indicating some level of prediction error. The shaded area around the dashed line represents the confidence interval, providing a visual representation of the uncertainty in the predictions. As the actual incident count increases, the confidence interval widens, suggesting that the model is less certain about its predictions for higher values of incident counts. This widening could be a sign of heteroscedasticity, meaning the variance of the prediction errors is not constant across all levels of the independent variables.
+
+The model seems to underpredict the number of incidents for higher actual counts, as indicated by the points that fall below the dashed line. This trend might signal that the model's assumptions do not entirely hold, or important predictors could be missing from the model, leading to systematic errors in prediction for higher incident counts.
+
+To improve the model, it might be beneficial to investigate further the residuals and consider additional variables that could account for the increase in variance with higher incident counts. Moreover, transforming the response variable or employing a different type of regression model might provide better predictions, especially for higher counts where the current model is less reliable.
+```{r}
+#| echo: false
+#| warning: false
+actual_incidents <- test_data$Incident_Count  # This should be your actual test data
+predicted_incidents <- predictions  # Assuming 'predictions' contains your model's predictions
+
+# Create a tibble to hold actual and predicted values
+comparison_data <- tibble(
+  Actual = actual_incidents,
+  Predicted = predicted_incidents
+)
+
+# Base plot
+base_plot <- comparison_data |>
+  ggplot(aes(x = Actual, y = Predicted)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    x = "Actual Incident Count",
+    y = "Predicted Incident Count"
+  ) +
+  theme_classic()
+
+# Panel (a): Just the scatter plot
+base_plot
+
+# Panel (b): Scatter plot with linear model fit line (without SE band)
+base_plot +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    color = "black",
+    linetype = "dashed",
+    formula = y ~ x
+  )
+
+# Panel (c): Scatter plot with linear model fit line (with SE band)
+base_plot +
+  geom_smooth(
+    method = "lm",
+    se = TRUE,
+    color = "black",
+    linetype = "dashed",
+    formula = y ~ x
+  )
+```
+# Results
+## statistical analysis
+The linear regression model summary provided statistical insights into the relationship between the incident count and the predictors, which include gender and perceived race of individuals involved in police interactions. The coefficients table indicated that several predictors were statistically significant, as evidenced by p-values less than 0.05. The residual statistics suggested that the model's predictions deviated from the actual counts by a certain amount, with a range from [minimum residual] to [maximum residual].The variable's impact on incident counts is statistically significant. In other words, the observed data is sufficient to convince us that, at a 95% confidence level, there is a non-zero association between the variable and incident counts.WHich means. Therefore, The frequency of use of force by police is significantly associated with their race and gender.The Multiple R-squared value is 0.2779, indicating that approximately 27.79% of the variability in the incident count can be explained by the model. However, this is quite low, suggesting that many factors influencing the incident count are not captured by the model.The Adjusted R-squared value is 0.2795, which is adjusted for the number of predictors in the model and can be negative if the model does not explain the variability in the data.The F-statistic is 1.112 with a p-value of 0.3891, suggesting that there is not enough evidence to conclude that the model significantly predicts the incident count.The provided model does not seem to have a strong predictive power as indicated by the low R-squared value and the non-significant F-statistic.The individual predictors (gender and perceived race categories) also do not show a statistically significant relationship with the incident count at the traditional 0.05 level.It might be necessary to review the model, consider adding other relevant variables, check for interaction effects, or explore other types of models that might better capture the relationship between the predictors and the response variable. which proves gender and human race do not have influence to the Incidents of use of force.
+
+
+```{r}
+#| echo: false
+#| warning: false
+model_summary <- summary(model)
+
+# Print the model summary
+print(model_summary)
+
+between <- function(x, left, right) {
+  x >= left & x <= right
+}
+```
+The provided statistical analysis of the model, based on 36 data points, reveals its limited explanatory power, as evidenced by a low R-squared value of 0.278 and an even lower adjusted R-squared of 0.028. The significant decrease from R-squared to adjusted R-squared suggests potential overfitting with too many possibly irrelevant predictors. The Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC) values, at 664.8 and 682.2 respectively, indicate room for improvement in model selection, either through simplification or by incorporating more relevant variables. The Root Mean Squared Error (RMSE) of 1824.10 highlights the average deviation of the model's predictions from the actual data points, although its impact is difficult to judge without scale context. Overall, the analysis suggests that the model struggles to capture the variance in the dependent variable adequately, hinting at the need for further diagnostics, validation, and consideration of alternative modeling approaches to enhance its predictive accuracy and relevance.
+```{r}
+
+#| echo: false
+#| warning: false
+# If you want to compare multiple models, you can pass them as a list
+# For example, if you had another model called model2, you could do:
+models_list <- list(Model1 = model) #, Model2 = model2)
+modelsummary(models_list)
+
+```
+# discussion
+
+
