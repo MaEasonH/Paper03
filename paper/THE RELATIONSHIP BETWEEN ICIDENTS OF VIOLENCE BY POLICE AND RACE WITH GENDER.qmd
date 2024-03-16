@@ -11,12 +11,6 @@ bibliography: references.bib
 ---
 ## introduction
 
-
-```{r}
-
-gitcreds_set()
-```
-
 As the influence of political correctness increasingly permeates society, incidents of violence stemming from racial issues are prevalent, drawing widespread attention from both the public and academic communities to the dynamics of police use of force.[@martin] This has underscored the urgent need for systematic analysis to inform policies and training within law enforcement agencies.[@2022police] Against a backdrop of growing calls for justice and accountability, understanding the role of police demographic data (such as gender and race) in the incidence of force use has emerged as a critical area of investigation. This paper delves into the complex interplay between these demographic factors and the frequency of reported force use incidents, aiming to elucidate patterns that may underlie such encounters. Despite extensive research into police behaviors and practices, a significant gap remains in empirical studies that precisely quantify the impact of police gender and race on the occurrence of use-of-force events. To bridge this gap, our study utilizes a novel dataset detailing the gender and race of officers involved in use-of-force incidents, along with event counts, to construct a linear model that thoroughly explores these relationships.[@martin] The essence of this article lies in analyzing and understanding the dynamics of police-involved violent incidents in relation to the demographic characteristics of the involved officers, focusing on the relationship between gender and race and the use of violence during law enforcement.[@ristroph2017] The purpose of this model is to reveal potential biases in how violent incidents occur with changes in these demographic factors. The significance of this research is multifaceted. Our findings not only facilitate rapid discussions about police practices and factors influencing use-of-force incidents but also provide empirical evidence that can guide targeted interventions and training programs aimed at reducing bias incidence and improving police services.Ultimately，the model demonstrates that analyzing the frequency of force used solely based on gender and race does not reflect a higher propensity for violence among police officers of specific races and genders.
 
 we use R [@citeR] for all data wrangling and analysis and R packages tidyverse [@tidy], ggthemes [@ggthemes], ggprism [@ggprism] and patchwork [@patchwork] to produce the figures, kableExtra [@kableExtra] to produce the tables.
