@@ -5,6 +5,7 @@
 It is organised as follows:
 
 inputs
+  - literature- inclued some pdf files about the articles
   - data - contains all the data files to be used for analysis and in the tables and figures.
   - clean_reduced.csv shows the cleaned data.
   - police_race.csv shows the orginal data.
